@@ -834,17 +834,27 @@ void OssParser::toGLTF(const string &filename, const string &texture, unsigned i
 
     tinygltf::Material mat;
     mat.pbrMetallicRoughness.baseColorTexture.index = 0;
+    mat.normalTexture.index = 1;
     mat.doubleSided = true;
     m.materials.push_back(mat);
 
-    tinygltf::Texture tex;
-    tex.sampler = 0;
-    tex.source = 0;
-    m.textures.push_back(tex);
+    tinygltf::Texture tex_color;
+    tex_color.sampler = 0;
+    tex_color.source = 0;
+    m.textures.push_back(tex_color);
 
-    tinygltf::Image img;
-    img.uri = texture;
-    m.images.push_back(img);
+    tinygltf::Texture tex_normal;
+    tex_normal.sampler = 0;
+    tex_normal.source = 1;
+    m.textures.push_back(tex_normal);
+
+    tinygltf::Image img_color;
+    img_color.uri = texture + ".dds";
+    m.images.push_back(img_color);
+
+    tinygltf::Image img_normal;
+    img_normal.uri = texture + "_NRM.dds";
+    m.images.push_back(img_normal);
 
     tinygltf::Sampler smp;
     smp.magFilter = TINYGLTF_TEXTURE_FILTER_LINEAR;
@@ -937,7 +947,7 @@ int main()
         std::cout << "big-endian";
     else
         std::cout << "mixed-endian";
-    printf("\n%d\n", pair<int, int>(1, 1)<pair<int, int>(1, 2));
+    printf("\n%d\n", pair<int, int>(1, 1) < pair<int, int>(1, 2));
     vector<string> filenames;
     // = 
     //{
@@ -957,7 +967,7 @@ int main()
         try {
             OssParser oss = OssParser("oss\\" + *iter + ".oss");
             // oss.poseIt(pos);
-            oss.toGLTF(*iter + to_string(pos) + ".gltf", "oss\\" + *iter + ".png", pos);
+            oss.toGLTF(*iter + to_string(pos) + ".gltf", "oss\\" + *iter, pos);
         } catch (...) {
             std::cout << "Error!" << std::endl;
         }

@@ -15,7 +15,7 @@ namespace fs = std::filesystem;
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STBI_MSC_SECURE_CRT
-#include <tiny_gltf.h>
+#include "tiny_gltf.h"
 
 using namespace std;
 
@@ -287,13 +287,17 @@ void OssParser::toGLTF(const string &filename, const string &texture, unsigned i
         center_masses[3 * i + 2] = 0;
     }
     unsigned int max_weights = 0;
+    unsigned int max_joint = 0;
     for (unsigned int i = 0; i < num_vertices; ++i) {
         if (max_weights < weights[i].weights.size()) {
             max_weights = (unsigned int)weights[i].weights.size();
         }
         for (unsigned int j = 0; j < weights[i].weights.size(); ++j) {
+            unsigned int joint1 = weights[i].weights[j].joint;
+            if (joint1 > max_joint) {
+                max_joint = joint1;
+            }
             for (unsigned int k = j + 1; k < weights[i].weights.size(); ++k) {
-                unsigned int joint1 = weights[i].weights[j].joint;
                 unsigned int joint2 = weights[i].weights[k].joint;
                 if (joint2 != joint1) {
                     if (joint2 < joint1) {
@@ -321,6 +325,7 @@ void OssParser::toGLTF(const string &filename, const string &texture, unsigned i
             }
         }
     }
+    printf("Max Joint Number = %d\n", max_joint);
     for (unsigned int i = 0; i < num_joints; ++i) {
         if (masses[i] > 1e-6) {
             // center_masses[3 * i]     /= masses[i];
@@ -643,10 +648,12 @@ void OssParser::toGLTF(const string &filename, const string &texture, unsigned i
         translations[3 * i] = joints[7 * i];
         translations[3 * i + 1] = joints[7 * i + 1];
         translations[3 * i + 2] = joints[7 * i + 2];
-        rotations[4 * i] = -joints[7 * i + 3];
-        rotations[4 * i + 1] = -joints[7 * i + 4];
-        rotations[4 * i + 2] = -joints[7 * i + 5];
-        rotations[4 * i + 3] = joints[7 * i + 6];
+        float quat2 = powf(joints[7 * i + 3], 2) + powf(joints[7 * i + 4], 2) + powf(joints[7 * i + 5], 2) + powf(joints[7 * i + 6], 2);
+        float quat = sqrtf(quat2);
+        rotations[4 * i] = -joints[7 * i + 3] / quat;
+        rotations[4 * i + 1] = -joints[7 * i + 4] / quat;
+        rotations[4 * i + 2] = -joints[7 * i + 5] / quat;
+        rotations[4 * i + 3] = joints[7 * i + 6] / quat;
     }
     b_anims.data.resize(7 * num_joints * num_frames * sizeof(float));
     memcpy(&b_anims.data[0], &translations[0], 3 * num_joints * num_frames * sizeof(float));
@@ -670,13 +677,16 @@ void OssParser::toGLTF(const string &filename, const string &texture, unsigned i
         tinygltf::BufferView bv_anims_rotation;
         tinygltf::BufferView bv_anims_translation;
 
-        bv_anims_rotation.buffer = index_buffer;
-        bv_anims_rotation.byteOffset = 3 * i * num_frames * sizeof(float);
-        bv_anims_rotation.byteLength = 3 * num_frames * sizeof(float);
-
         bv_anims_translation.buffer = index_buffer;
-        bv_anims_translation.byteOffset = 3 * num_joints * num_frames * sizeof(float) + 4 * i * num_frames * sizeof(float);
-        bv_anims_translation.byteLength = 4 * num_frames * sizeof(float);
+        bv_anims_translation.byteOffset = 3 * i * num_frames * sizeof(float);
+        bv_anims_translation.byteLength = 3 * num_frames * sizeof(float);
+
+        bv_anims_rotation.buffer = index_buffer;
+        bv_anims_rotation.byteOffset = 3 * num_joints * num_frames * sizeof(float) + 4 * i * num_frames * sizeof(float);
+        bv_anims_rotation.byteLength = 4 * num_frames * sizeof(float);
+
+        m.bufferViews.push_back(bv_anims_translation);
+        m.bufferViews.push_back(bv_anims_rotation);
 
         tinygltf::Accessor a_anims_translation;
         tinygltf::Accessor a_anims_rotation;
@@ -693,8 +703,6 @@ void OssParser::toGLTF(const string &filename, const string &texture, unsigned i
         a_anims_rotation.count = num_frames;
         a_anims_rotation.type = TINYGLTF_TYPE_VEC4;
 
-        m.bufferViews.push_back(bv_anims_rotation);
-        m.bufferViews.push_back(bv_anims_translation);
         m.accessors.push_back(a_anims_translation);
         m.accessors.push_back(a_anims_rotation);
 
@@ -724,8 +732,10 @@ void OssParser::toGLTF(const string &filename, const string &texture, unsigned i
 
         anim.channels.push_back(anim_chan1);
         anim.channels.push_back(anim_chan2);
+
     }
 
+    //printf("target_node = %d\n", anim.channels[0].target_node);
     m.animations.push_back(anim);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -797,20 +807,20 @@ void OssParser::toGLTF(const string &filename, const string &texture, unsigned i
     for (unsigned int i = 0; i < num_joints; ++i) {
         tinygltf::Node node;  // Структура скелета передаётся в node (пока не используется)
         node.rotation =   
-            //{0.0f, 0.0f, 0.0f, 1.0f};
-            {
-                joints[num_frames * 7 * i + 3], 
-                joints[num_frames * 7 * i + 4], 
-                joints[num_frames * 7 * i + 5], 
-                joints[num_frames * 7 * i + 6] 
-            };
+            {0.0f, 0.0f, 0.0f, 1.0f};
+            //{
+            //    joints[num_frames * 7 * i + 3], 
+            //    joints[num_frames * 7 * i + 4], 
+            //    joints[num_frames * 7 * i + 5], 
+            //    joints[num_frames * 7 * i + 6] 
+            //};
         node.translation =  //{ center_masses[3 * i], center_masses[3 * i + 1], center_masses[3 * i + 2] }; 
-            //{0.0f, 0.0f, 0.0f};
-            {
-                joints[num_frames * 7 * i + 0], 
-                joints[num_frames * 7 * i + 1], 
-                joints[num_frames * 7 * i + 2]
-            };
+            {0.0f, 0.0f, 0.0f};
+            //{
+            //    joints[num_frames * 7 * i + 0], 
+            //    joints[num_frames * 7 * i + 1], 
+            //    joints[num_frames * 7 * i + 2]
+            //};
         sprintf(strbuf, "Joint.%03d", i);
         node.name = std::string(strbuf);
         main_node.children.push_back(i);
@@ -833,28 +843,36 @@ void OssParser::toGLTF(const string &filename, const string &texture, unsigned i
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
     tinygltf::Material mat;
-    mat.pbrMetallicRoughness.baseColorTexture.index = 0;
-    mat.normalTexture.index = 1;
     mat.doubleSided = true;
+    int img_src = 0;
+
+    if (fs::exists(texture + ".dds")) {
+        tinygltf::Texture tex_color;
+        tex_color.sampler = 0;
+        tex_color.source = img_src;
+        img_src++;
+        m.textures.push_back(tex_color);
+
+        tinygltf::Image img_color;
+        img_color.uri = texture + ".dds";
+        m.images.push_back(img_color);
+        mat.pbrMetallicRoughness.baseColorTexture.index = 0;
+    }
+
+    if (fs::exists(texture + "_NRM.dds")) {
+        tinygltf::Texture tex_normal;
+        tex_normal.sampler = 0;
+        tex_normal.source = img_src;
+        img_src++;
+        m.textures.push_back(tex_normal);
+
+        tinygltf::Image img_normal;
+        img_normal.uri = texture + "_NRM.dds";
+        m.images.push_back(img_normal);
+        mat.normalTexture.index = 1;
+    }
+
     m.materials.push_back(mat);
-
-    tinygltf::Texture tex_color;
-    tex_color.sampler = 0;
-    tex_color.source = 0;
-    m.textures.push_back(tex_color);
-
-    tinygltf::Texture tex_normal;
-    tex_normal.sampler = 0;
-    tex_normal.source = 1;
-    m.textures.push_back(tex_normal);
-
-    tinygltf::Image img_color;
-    img_color.uri = texture + ".dds";
-    m.images.push_back(img_color);
-
-    tinygltf::Image img_normal;
-    img_normal.uri = texture + "_NRM.dds";
-    m.images.push_back(img_normal);
 
     tinygltf::Sampler smp;
     smp.magFilter = TINYGLTF_TEXTURE_FILTER_LINEAR;
@@ -949,9 +967,9 @@ int main()
         std::cout << "mixed-endian";
     printf("\n%d\n", pair<int, int>(1, 1) < pair<int, int>(1, 2));
     vector<string> filenames;
-    // = 
+    //= 
     //{
-    //    "burglar"
+    //    "Zombie"
     //};
     std::string path = "./oss/";
     std::string oss_ext = ".oss";

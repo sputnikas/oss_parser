@@ -130,6 +130,9 @@
   <ItemGroup>
     <ClCompile Include="oss_parser.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="tiny_gltf.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -1,0 +1,228 @@
+{
+    "uri": "archer.gltf",
+    "mimeType": "model/gltf+json",
+    "validatorVersion": "2.0.0-dev.3.8",
+    "issues": {
+        "numErrors": 0,
+        "numWarnings": 2,
+        "numInfos": 0,
+        "numHints": 0,
+        "messages": [
+            {
+                "code": "IMAGE_UNRECOGNIZED_FORMAT",
+                "message": "Image format not recognized.",
+                "severity": 1,
+                "pointer": "/images/0"
+            },
+            {
+                "code": "IMAGE_UNRECOGNIZED_FORMAT",
+                "message": "Image format not recognized.",
+                "severity": 1,
+                "pointer": "/images/1"
+            }
+        ],
+        "truncated": false
+    },
+    "info": {
+        "version": "2.0",
+        "generator": "tinygltf",
+        "resources": [
+            {
+                "pointer": "/buffers/0",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 25884
+            },
+            {
+                "pointer": "/buffers/1",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 33288
+            },
+            {
+                "pointer": "/buffers/2",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 17256
+            },
+            {
+                "pointer": "/buffers/3",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 51768
+            },
+            {
+                "pointer": "/buffers/4",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 51768
+            },
+            {
+                "pointer": "/buffers/5",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 2504
+            },
+            {
+                "pointer": "/buffers/6",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 1524936
+            },
+            {
+                "pointer": "/buffers/7",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 672
+            },
+            {
+                "pointer": "/buffers/8",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 360
+            },
+            {
+                "pointer": "/buffers/9",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 448
+            },
+            {
+                "pointer": "/buffers/10",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 2504
+            },
+            {
+                "pointer": "/buffers/11",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 17528
+            },
+            {
+                "pointer": "/buffers/12",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 2760
+            },
+            {
+                "pointer": "/buffers/13",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 1824
+            },
+            {
+                "pointer": "/buffers/14",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 1840
+            },
+            {
+                "pointer": "/buffers/15",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 5520
+            },
+            {
+                "pointer": "/buffers/16",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 2504
+            },
+            {
+                "pointer": "/buffers/17",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 262920
+            },
+            {
+                "pointer": "/buffers/18",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 1056
+            },
+            {
+                "pointer": "/buffers/19",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 840
+            },
+            {
+                "pointer": "/buffers/20",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 704
+            },
+            {
+                "pointer": "/buffers/21",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 2504
+            },
+            {
+                "pointer": "/buffers/22",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 17528
+            },
+            {
+                "pointer": "/buffers/23",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 1692
+            },
+            {
+                "pointer": "/buffers/24",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 912
+            },
+            {
+                "pointer": "/buffers/25",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 1128
+            },
+            {
+                "pointer": "/buffers/26",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 3384
+            },
+            {
+                "pointer": "/buffers/27",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 2504
+            },
+            {
+                "pointer": "/buffers/28",
+                "mimeType": "application/gltf-buffer",
+                "storage": "data-uri",
+                "byteLength": 35056
+            },
+            {
+                "pointer": "/images/0",
+                "storage": "external",
+                "uri": "oss/archer.dds"
+            },
+            {
+                "pointer": "/images/1",
+                "storage": "external",
+                "uri": "oss/archer_NRM.dds"
+            }
+        ],
+        "animationCount": 1,
+        "materialCount": 5,
+        "hasMorphTargets": false,
+        "hasSkins": true,
+        "hasTextures": true,
+        "hasDefaultScene": false,
+        "drawCallCount": 5,
+        "totalVertexCount": 2672,
+        "totalTriangleCount": 3102,
+        "maxUVs": 1,
+        "maxInfluences": 8,
+        "maxAttributes": 6
+    }
+}

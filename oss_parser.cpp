@@ -687,6 +687,44 @@ unsigned int OssParser::add(tinygltf::Model& m, const string& texture) {
         m.animations[0] = anim;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////
+    // Отдельная проблема это InverseBindMatrices
+    // К сожалению, но код ниже работает неправильно - иногда det матрицы равен 0. Обращение даёт
+    // бред, к счастью, как оказалось она и не нужна! Вот только для assimp она нужна...
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    tinygltf::Buffer ibm_buffer;
+    tinygltf::BufferView ibm_buffer_view;
+    tinygltf::Accessor ibm_accessor;
+    
+    float* ibm = new float[16 * num_joints];
+    float inv_ibm[16] = {
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+    };
+    //float identity[7] = {0, 0, 0, 0, 0, 0, 1};
+    for (unsigned int i = 0; i<num_joints; ++i) {
+        memcpy(&ibm[16*i], &inv_ibm[0], 16 * sizeof(float));
+    }
+    ibm_buffer.data.resize(16 * num_joints * sizeof(float));
+    memcpy(&ibm_buffer.data[0], &ibm[0], 16 * num_joints * sizeof(float));
+    m.buffers.push_back(ibm_buffer);
+    
+    ibm_buffer_view.buffer = (unsigned) m.buffers.size() - 1;
+    ibm_buffer_view.byteOffset = 0;
+    ibm_buffer_view.byteLength = 16 * num_joints * sizeof(float);
+    m.bufferViews.push_back(ibm_buffer_view);
+    
+    ibm_accessor.bufferView = (unsigned) m.bufferViews.size() - 1;
+    ibm_accessor.byteOffset = 0;
+    ibm_accessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
+    ibm_accessor.count = num_joints;
+    ibm_accessor.type = TINYGLTF_TYPE_MAT4;
+    m.accessors.push_back(ibm_accessor);
+    
+    unsigned ibm_accessor_index = (unsigned) m.accessors.size() - 1;
+    delete [] ibm;
+    ///////////////////////////////////////////////////////////////////////////////////////////////
     // Скелет
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -694,6 +732,8 @@ unsigned int OssParser::add(tinygltf::Model& m, const string& texture) {
     main_node.mesh = mesh_index;
     main_node.skin = skin_index;
     char strbuf[1024];
+    sprintf(strbuf, "Main.%03d", node_index + num_joints);
+    main_node.name = string(strbuf);
 
     for (unsigned int i = 0; i < num_joints; ++i) {
         tinygltf::Node node;  // Структура скелета передаётся в node (пока не используется)
@@ -723,6 +763,7 @@ unsigned int OssParser::add(tinygltf::Model& m, const string& texture) {
     for (unsigned int i = 0; i < num_joints; ++i) {
         skin.joints.push_back(node_index + i);
     }
+    skin.inverseBindMatrices = ibm_accessor_index;
     m.skins.push_back(skin);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -1247,6 +1288,9 @@ unsigned int OsmParser::add(tinygltf::Model& m, const string& texture, const str
 
     tinygltf::Node main_node;  // Структура скелета передаётся в node (пока не используется)
     main_node.mesh = mesh_index;
+    char strbuf[1024];
+    sprintf(strbuf, "Main.%03d", node_index);
+    main_node.name = string(strbuf);
 
     m.nodes.push_back(main_node);
 
@@ -1319,7 +1363,6 @@ unsigned int OsmParser::add(tinygltf::Model& m, const string& texture, const str
 
 void genOSSwithAttach(const string &filename) {
     tinygltf::Model m;
-    tinygltf::Scene scene;  // Сцена в файле
     // Непонятная штука, видимо задает фичи gltf
     tinygltf::Asset asset;
     asset.version = "2.0";
@@ -1340,9 +1383,10 @@ void genOSSwithAttach(const string &filename) {
     string oss_ext = ".oss";
     string osm_ext = ".osm";
     string main_texture = main_dir + "/" + main_fname;
+    tinygltf::Node root_node;
     if (fs::exists(filename)) {
         OssParser oss = OssParser(filename);
-        scene.nodes.push_back(oss.add(m, main_texture));
+        root_node.children.push_back(oss.add(m, main_texture));
         string attach_dir = main_dir + "/" + main_fname + ".attach/";
         if (fs::exists(attach_dir)) {
             for (const auto& file : fs::directory_iterator(attach_dir)) {
@@ -1352,10 +1396,10 @@ void genOSSwithAttach(const string &filename) {
                     OssParser* oss2 = new OssParser(file.path().string());
                     if (dds_map.find(attachname) != dds_map.end()) {
                         cout << "Texture: " << dds_map[attachname] << endl;
-                        scene.nodes.push_back(oss2->add(m, dds_map[attachname]));
+                        root_node.children.push_back(oss2->add(m, dds_map[attachname]));
                     } else {
                         cout << "Texture: " << main_texture << endl;
-                        scene.nodes.push_back(oss2->add(m, main_texture));
+                        root_node.children.push_back(oss2->add(m, main_texture));
                     }
                     delete oss2;
                 }
@@ -1363,16 +1407,20 @@ void genOSSwithAttach(const string &filename) {
                     OsmParser* osm2 = new OsmParser(file.path().string());
                     if (dds_map.find(attachname) != dds_map.end()) {
                         cout << "Texture: " << dds_map[attachname] << endl;
-                        scene.nodes.push_back(osm2->add(m, dds_map[attachname], attach_dir + attachname + ".tlf", oss.getFramePerSecond(), oss.getNumFrames()));
+                        root_node.children.push_back(osm2->add(m, dds_map[attachname], attach_dir + attachname + ".tlf", oss.getFramePerSecond(), oss.getNumFrames()));
                     } else {
                         cout << "Texture: " << main_texture << endl;
-                        scene.nodes.push_back(osm2->add(m, main_texture, attach_dir + attachname + ".tlf", oss.getFramePerSecond(), oss.getNumFrames()));
+                        root_node.children.push_back(osm2->add(m, main_texture, attach_dir + attachname + ".tlf", oss.getFramePerSecond(), oss.getNumFrames()));
                     }
                     delete osm2;
                 }
             }
         }
     }
+    root_node.name = "Root";
+    m.nodes.push_back(root_node);
+    tinygltf::Scene scene;  // Сцена в файле
+    scene.nodes.push_back((unsigned int)m.nodes.size() - 1);
     m.scenes.push_back(scene);
     tinygltf::TinyGLTF gltf;
     gltf.WriteGltfSceneToFile(&m, (main_fname + ".gltf").c_str(),
@@ -1391,19 +1439,19 @@ int main()
     else
         cout << "mixed-endian";
     printf("\n%d\n", pair<int, int>(1, 1) < pair<int, int>(1, 2));
-    vector<string> filenames;
-    //= 
-    //{
-    //    "elfranger"
-    //};
-    string path = "./oss/";
-    string oss_ext = ".oss";
-    for (const auto& file : fs::directory_iterator(path)) {
-        if (file.path().extension() == oss_ext) {
-            cout << file.path().stem() << endl;
-            filenames.push_back(file.path().stem().string());
-        }
-    }
+    vector<string> filenames
+    = 
+    {
+        "archer"
+    };
+    //string path = "./oss/";
+    //string oss_ext = ".oss";
+    //for (const auto& file : fs::directory_iterator(path)) {
+    //    if (file.path().extension() == oss_ext) {
+    //        cout << file.path().stem() << endl;
+    //        filenames.push_back(file.path().stem().string());
+    //    }
+    //}
     unsigned int pos = 0;
     for (auto iter = filenames.begin(); iter != filenames.end(); iter++) {
         try {
